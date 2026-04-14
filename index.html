@@ -683,7 +683,7 @@ async function callAPI(userText) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1200,
       system: SYSTEM,
       messages: history.slice(-10)
