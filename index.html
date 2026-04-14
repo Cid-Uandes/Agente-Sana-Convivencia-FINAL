@@ -677,7 +677,7 @@ const CRITICAL_KEYWORDS = ['denuncia','maltrato','acoso','hostigamiento','suicid
 
 async function callAPI(userText) {
   history.push({ role: 'user', content: userText });
-  const res = await fetch('https://agente-uandes-proxy.cid-33a.workers.dev', {
+  const res = await fetch('https://agenteuandes.cid-33a.workers.dev', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
