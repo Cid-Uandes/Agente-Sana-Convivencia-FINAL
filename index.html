@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistente Formación Clínica · Universidad de los Andes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red:        #CE0019;
+    --red-dark:   #8A001A;
+    --gray-dark:  #131E29;
+    --gray-mid:   #415364;
+    --gray-light: #758592;
+    --warm-gray:  #D6D1CA;
+    --surface:    #F7F5F3;
+    --white:      #FFFFFF;
+    --green:      #15803d;
+    --amber:      #b45309;
+    --rose:       #be123c;
+    --font:       'DM Sans', sans-serif;
+  }
+  html, body {
+    min-height: 100%; font-family: var(--font);
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px 14px;
+  }
+  .card {
+    width: 100%; max-width: 720px; background: var(--white);
+    border-radius: 18px;
+    box-shadow: 0 8px 48px rgba(19,30,41,.13), 0 1px 4px rgba(19,30,41,.06);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+
+  /* HEADER */
+  .hdr {
+    background: var(--red); padding: 18px 24px;
+    display: flex; align-items: center; gap: 13px;
+    position: relative; overflow: hidden;
+  }
+  .hdr::after  { content:''; position:absolute; right:-50px; top:-50px; width:180px; height:180px; background:rgba(255,255,255,.05); border-radius:50%; }
+  .hdr::before { content:''; position:absolute; right:80px; bottom:-40px; width:120px; height:120px; background:rgba(255,255,255,.04); border-radius:50%; }
+  .hdr img { height:26px; object-fit:contain; position:relative; z-index:1; }
+  .hdr-sep { width:1px; height:26px; background:rgba(255,255,255,.3); flex-shrink:0; }
+  .hdr-txt { flex:1; position:relative; z-index:1; }
+  .hdr-txt h1 { color:#fff; font-size:13.5px; font-weight:700; letter-spacing:-.2px; }
+  .hdr-txt p  { color:rgba(255,255,255,.7); font-size:11px; margin-top:2px; }
+  .hdr-pill {
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25);
+    border-radius:20px; padding:4px 11px; position:relative; z-index:1;
+  }
+  .hdr-pill .dot { width:7px; height:7px; border-radius:50%; background:#4ade80; animation:pu 2s infinite; }
+  .hdr-pill span { font-size:11px; color:rgba(255,255,255,.9); font-weight:500; }
+  @keyframes pu { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 4px rgba(74,222,128,0)} }
+
+  /* SCREENS */
+  .screen { display:none; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ── CONSENT SCREEN ── */
+  #sc-terms { padding:28px 28px 26px; }
+  .ci { display:flex; align-items:flex-start; gap:14px; margin-bottom:18px; }
+  .ci-icon {
+    width:46px; height:46px; background:#fdf0f0; border-radius:10px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    border:1px solid #f5c4c4;
+  }
+  .ci h2 { font-size:17px; font-weight:700; color:var(--gray-dark); letter-spacing:-.3px; margin-bottom:4px; }
+  .ci p  { font-size:13px; color:var(--gray-mid); line-height:1.55; }
+  .terms-box {
+    background:var(--surface); border:1px solid var(--warm-gray);
+    border-radius:10px; padding:16px 18px; max-height:220px; overflow-y:auto; margin-bottom:18px;
+  }
+  .terms-box::-webkit-scrollbar { width:4px; }
+  .terms-box::-webkit-scrollbar-thumb { background:var(--warm-gray); border-radius:4px; }
+  .ts { margin-bottom:13px; }
+  .ts:last-child { margin-bottom:0; }
+  .ts h4 { font-size:11px; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; }
+  .ts ul { list-style:none; padding-left:0; }
+  .ts ul li { font-size:12.5px; color:var(--gray-mid); line-height:1.65; margin-bottom:3px; padding-left:14px; position:relative; }
+  .ts ul li::before { content:'—'; position:absolute; left:0; color:var(--warm-gray); font-size:11px; }
+  .chks { display:flex; flex-direction:column; gap:9px; margin-bottom:20px; }
+  .chk {
+    display:flex; align-items:flex-start; gap:11px; padding:11px 13px;
+    background:var(--surface); border-radius:8px; border:1px solid var(--warm-gray);
+    cursor:pointer; transition:border-color .15s, background .15s;
+  }
+  .chk:hover { border-color:var(--red); background:#fdf8f8; }
+  .chk input { margin-top:2px; width:15px; height:15px; accent-color:var(--red); cursor:pointer; flex-shrink:0; }
+  .chk label { font-size:13px; color:var(--gray-dark); line-height:1.5; cursor:pointer; }
+  .btn-start {
+    width:100%; padding:13px; background:var(--red); color:#fff; border:none;
+    border-radius:10px; font-size:14px; font-weight:700; font-family:var(--font);
+    cursor:pointer; transition:background .15s; letter-spacing:.2px;
+  }
+  .btn-start:hover:not(:disabled) { background:var(--red-dark); }
+  .btn-start:disabled { background:var(--warm-gray); cursor:not-allowed; }
+
+  /* ── CHAT SCREEN ── */
+  .chat-bar {
+    padding:10px 22px; border-bottom:1px solid #f0eeec;
+    display:flex; align-items:center; justify-content:space-between;
+    background:#fdf9f9;
+  }
+  .course-tag {
+    display:inline-flex; align-items:center; gap:6px;
+    background:#fbeaea; color:var(--red); font-size:11.5px; font-weight:600;
+    padding:5px 13px; border-radius:20px; border:1px solid #f5c4c4;
+  }
+  .rst {
+    font-size:11.5px; color:var(--gray-light); background:none;
+    border:1px solid var(--warm-gray); border-radius:6px; padding:4px 11px;
+    cursor:pointer; font-family:var(--font); transition:color .15s, border-color .15s;
+  }
+  .rst:hover { color:var(--red); border-color:#f5c4c4; background:#fdf8f8; }
+
+  /* MESSAGES */
+  .msgs {
+    flex:1; padding:18px 22px; overflow-y:auto;
+    display:flex; flex-direction:column; gap:13px;
+    min-height:320px; max-height:420px;
+  }
+  .msgs::-webkit-scrollbar { width:4px; }
+  .msgs::-webkit-scrollbar-thumb { background:var(--warm-gray); border-radius:4px; }
+  .mrow { display:flex; gap:9px; align-items:flex-end; animation:fu .2s ease; }
+  .mrow.u { flex-direction:row-reverse; }
+  @keyframes fu { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+  .av {
+    width:30px; height:30px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:700;
+  }
+  .av.bot  { background:var(--red); color:#fff; }
+  .av.user { background:var(--gray-dark); color:#fff; }
+  .bub {
+    max-width:80%; padding:11px 15px; font-size:13.5px;
+    line-height:1.7; border-radius:14px;
+  }
+  .bub.bot  { background:var(--surface); border:1px solid #eae8e4; border-bottom-left-radius:4px; color:var(--gray-dark); }
+  .bub.user { background:var(--red); color:#fff; border-bottom-right-radius:4px; }
+  .bub strong { font-weight:600; }
+  .bub ul { padding-left:18px; margin-top:5px; }
+  .bub ul li { margin-bottom:4px; }
+  .bub hr { border:none; border-top:1px solid #e0ddd8; margin:10px 0; }
+
+  /* CONFIDENCE BADGE */
+  .conf {
+    display:inline-flex; align-items:center; gap:4px;
+    font-size:10.5px; font-weight:600; padding:2px 9px; border-radius:20px;
+    margin-top:8px;
+  }
+  .conf.high   { background:#dcfce7; color:var(--green); }
+  .conf.medium { background:#fef3c7; color:var(--amber); }
+  .conf.low    { background:#ffe4e6; color:var(--rose);  }
+
+  /* SOURCE — texto discreto inline */
+  .source-txt {
+    display:block; margin-top:8px;
+    font-size:11px; color:var(--gray-light); letter-spacing:.1px;
+  }
+  .source-txt a { color:var(--gray-light); text-decoration:underline dotted; }
+  .source-txt a:hover { color:var(--red); }
+
+  /* ALERT BOX */
+  .alert-box {
+    margin-top:9px; padding:11px 13px; background:#fff7f7;
+    border:1px solid #f5c4c4; border-radius:8px;
+    font-size:12.5px; color:var(--gray-dark); line-height:1.6;
+  }
+  .alert-box .alert-title { font-weight:700; color:var(--red); margin-bottom:4px; display:flex; align-items:center; gap:5px; }
+
+  /* SUGGESTIONS */
+  .sugg-area {
+    padding:0 22px 13px; display:flex; flex-wrap:wrap; gap:6px;
+    border-bottom:1px solid #f0eeec;
+  }
+  .sugg-label { width:100%; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--gray-light); margin-bottom:4px; }
+  .sp {
+    font-size:12px; padding:5px 12px; border:1px solid var(--warm-gray);
+    border-radius:20px; background:#fff; color:var(--gray-mid);
+    cursor:pointer; font-family:var(--font); transition:all .12s;
+    text-align:left;
+  }
+  .sp:hover { border-color:var(--red); color:var(--red); background:#fdf8f8; }
+
+  /* TYPING */
+  .typing {
+    display:flex; align-items:center; gap:5px; padding:11px 14px;
+    background:var(--surface); border:1px solid #eae8e4;
+    border-radius:14px; border-bottom-left-radius:4px; width:fit-content;
+  }
+  .typing span { width:6px; height:6px; background:var(--gray-light); border-radius:50%; animation:bl 1.3s infinite; }
+  .typing span:nth-child(2){animation-delay:.22s}
+  .typing span:nth-child(3){animation-delay:.44s}
+  @keyframes bl { 0%,80%,100%{opacity:.25;transform:scale(.9)} 40%{opacity:1;transform:scale(1.1)} }
+
+  /* INPUT */
+  .iarea { padding:13px 22px 17px; display:flex; gap:9px; align-items:center; }
+  .cin {
+    flex:1; padding:10px 15px; border:1px solid var(--warm-gray);
+    border-radius:10px; font-size:13.5px; font-family:var(--font);
+    color:var(--gray-dark); background:var(--white); outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .cin::placeholder { color:var(--warm-gray); }
+  .cin:focus { border-color:var(--red); box-shadow:0 0 0 3px rgba(206,0,25,.08); }
+  .sbtn {
+    padding:10px 20px; background:var(--red); color:#fff; border:none;
+    border-radius:10px; font-size:13.5px; font-weight:700; font-family:var(--font);
+    cursor:pointer; transition:background .15s; white-space:nowrap;
+    display:flex; align-items:center; gap:6px;
+  }
+  .sbtn:hover { background:var(--red-dark); }
+
+  .foot {
+    padding:7px 22px 13px; text-align:center;
+    font-size:10px; color:var(--warm-gray); border-top:1px solid #f0eeec;
+  }
+
+  @media(max-width:480px){
+    body { padding:0; align-items:flex-start; background:var(--white); }
+    .card { border-radius:0; box-shadow:none; min-height:100vh; }
+    .bub { max-width:88%; }
+    #sc-terms { padding:20px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <img src="https://www.uandes.cl/wp-content/uploads/2025/09/Relleno-Blanco.png"
+         alt="Universidad de los Andes"
+         onerror="this.outerHTML='<span style=\'color:#fff;font-size:13px;font-weight:700;position:relative;z-index:1;\'>UANDES</span>'">
+    <div class="hdr-sep"></div>
+    <div class="hdr-txt">
+      <h1>Asistente de Formación Clínica Docente</h1>
+      <p>Universidad de los Andes · Agente informativo de apoyo al curso</p>
+    </div>
+    <div class="hdr-pill"><div class="dot"></div><span>En línea</span></div>
+  </div>
+
+  <!-- ══ PANTALLA 1: TÉRMINOS ══ -->
+  <div class="screen active" id="sc-terms">
+    <div class="ci">
+      <div class="ci-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#CE0019" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Términos y Condiciones de Uso</h2>
+        <p>Este asistente entrega información basada exclusivamente en los documentos del curso. Lee con atención antes de continuar.</p>
+      </div>
+    </div>
+
+    <div class="terms-box">
+      <div class="ts">
+        <h4>Finalidad del agente</h4>
+        <ul>
+          <li>Su finalidad es <strong>orientar e informar</strong> sobre los contenidos del curso de Formación Clínica Docente de la Universidad de los Andes.</li>
+          <li>Las respuestas se generan únicamente a partir de los documentos disponibles del curso. No se garantiza completitud fuera de dichas fuentes.</li>
+          <li>Este agente <strong>no reemplaza</strong> los canales institucionales oficiales ni genera solicitudes, denuncias o acciones formales.</li>
+        </ul>
+      </div>
+      <div class="ts">
+        <h4>Privacidad y anonimato</h4>
+        <ul>
+          <li>El uso es <strong>completamente anónimo</strong>. No se solicitan ni almacenan datos personales.</li>
+          <li>No se registran las consultas realizadas de forma individual.</li>
+          <li>En caso de que se recopilen datos, será únicamente con fines de <strong>análisis estadístico agregado</strong> para mejora del curso.</li>
+        </ul>
+      </div>
+      <div class="ts">
+        <h4>Limitaciones importantes</h4>
+        <ul>
+          <li>Si la información consultada no está en los documentos, el agente lo indicará explícitamente.</li>
+          <li>Ante situaciones críticas o de emergencia, este agente entrega la <strong>ruta de acción institucional</strong>, pero no gestiona ni tramita ningún procedimiento.</li>
+          <li>Para acciones formales, debes dirigirte directamente a los canales institucionales de la Universidad de los Andes.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="chks">
+      <div class="chk" onclick="tog('ch1')">
+        <input type="checkbox" id="ch1">
+        <label for="ch1">He leído y acepto los <strong>Términos y Condiciones</strong>. Entiendo que las respuestas son orientativas y basadas exclusivamente en documentos del curso.</label>
+      </div>
+      <div class="chk" onclick="tog('ch2')">
+        <input type="checkbox" id="ch2">
+        <label for="ch2">Comprendo que el uso es <strong>anónimo</strong>, que este agente no gestiona solicitudes formales y que ante situaciones críticas debo usar los canales institucionales de la Universidad.</label>
+      </div>
+    </div>
+
+    <button class="btn-start" id="btn-start" disabled onclick="initChat()">
+      Acepto y quiero comenzar &nbsp;→
+    </button>
+  </div>
+
+  <!-- ══ PANTALLA 2: CHAT ══ -->
+  <div class="screen" id="sc-chat">
+    <div class="chat-bar">
+      <span class="course-tag">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Formación Clínica Docente · UAndes
+      </span>
+      <button class="rst" onclick="doReset()">↺ Nueva sesión</button>
+    </div>
+
+    <div class="msgs" id="msgs"></div>
+
+    <div class="sugg-area" id="sugg-area">
+      <div class="sugg-label">Preguntas del curso — elige para comenzar</div>
+    </div>
+
+    <div class="iarea">
+      <input class="cin" id="cin" type="text"
+        placeholder="Escribe tu consulta sobre el curso..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();doSend();}"
+        autocomplete="off">
+      <button class="sbtn" onclick="doSend()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar
+      </button>
+    </div>
+  </div>
+
+  <div class="foot">
+    Agente informativo · Universidad de los Andes · Uso anónimo · No gestiona solicitudes formales
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SISTEMA DEL AGENTE
+══════════════════════════════════════════ -->
+<script>
+/* ───────────────────────────────────────────
+   BASE DE CONOCIMIENTO COMPLETA DEL CURSO
+─────────────────────────────────────────── */
+const SYSTEM = `Eres un agente conversacional de la Universidad de los Andes (UAndes), especializado en el curso de Formación Clínica Docente. Tu único propósito es orientar e informar basándote EXCLUSIVAMENTE en los documentos del curso que se te proporcionan a continuación.
+
+═══════════════════════════════
+PRINCIPIOS OPERATIVOS CRÍTICOS
+═══════════════════════════════
+1. Responde SOLO con información contenida en los documentos. NUNCA inventes, supongas ni complementes con conocimiento externo.
+2. Si la información no está en los documentos, responde EXACTAMENTE: "No es posible responder esta consulta con la información disponible en los documentos del curso."
+3. Si la consulta es ambigua, solicita precisión: "¿Podría especificar a qué aspecto se refiere dentro de los contenidos del curso?"
+4. No generes opiniones, recomendaciones fuera de los documentos ni datos de usuarios.
+5. Responde siempre en español, con tono profesional y cálido, coherente con los valores de la Universidad de los Andes.
+
+═══════════════════════════════════
+ESTRUCTURA OBLIGATORIA DE RESPUESTA
+═══════════════════════════════════
+Siempre usa este formato exacto:
+
+**Respuesta:**
+[Respuesta clara y directa basada únicamente en los documentos]
+
+**Fuente:**
+[Nombre del documento + sección + link si aplica]
+
+**Nivel de confianza:** [ALTO / MEDIO / BAJO]
+- ALTO: la respuesta está explícitamente en el documento con texto literal
+- MEDIO: la respuesta se puede inferir directamente del contexto del documento
+- BAJO: la respuesta es parcial o la información es escasa en el documento
+
+**Sugerencias relacionadas:**
+[Exactamente 2 preguntas cortas, relacionadas al tema consultado, basadas en los documentos. Una por línea. Sin numeración ni viñetas. Sin combinar múltiples preguntas en una sola línea.]
+
+═══════════════════════════════════════════════════
+MANEJO DE SITUACIONES CRÍTICAS — RUTA DE ACCIÓN
+═══════════════════════════════════════════════════
+Cuando la consulta involucre: denuncias, maltrato, riesgo suicida, conducta suicida, emergencias, sana convivencia o solicitudes formales:
+1. Entrega los pasos EXACTOS de la RUTA DE ACCIÓN del documento.
+2. Incluye los links institucionales correspondientes.
+3. Agrega SIEMPRE al final: "⚠️ Este agente no genera ni gestiona solicitudes formales. La información entregada es únicamente referencial y de carácter orientativo. Para acciones formales, dirígete directamente a los canales institucionales de la Universidad de los Andes."
+
+═══════════════════════════════════════════════════
+DOCUMENTOS DEL CURSO — CONTENIDO OFICIAL
+═══════════════════════════════════════════════════
+
+## DOCUMENTO 1: "Preguntas Inicio" — 16 Preguntas del Curso
+
+**Pregunta 1: ¿Qué efectos del clima educativo clínico pueden observarse en el bienestar y desempeño del estudiante?**
+Respuesta: La falta de retroalimentación oportuna puede afectar la motivación y la posibilidad de mejorar el desempeño. La ausencia de objetivos claros y de planificación puede generar desorientación respecto de lo que se espera aprender. La participación irregular del estudiante puede relacionarse con un entorno formativo poco estructurado. Un clima educativo clínico insuficientemente estructurado puede afectar tanto el bienestar como la consistencia del desempeño. Lo central es que un clima educativo clínico con poca estructura y escasa retroalimentación puede generar desorientación y afectar el aprendizaje de manera relevante.
+
+**Pregunta 2: ¿Qué medida contribuiría mejor a una evaluación más equitativa?**
+Respuesta: Acordar criterios explícitos de evaluación y revisar sesgos que puedan influir en el juicio docente. La equidad en evaluación clínica no consiste en dejar todo al criterio individual ni en aplicar un único formato a todos los casos. Lo importante es contar con criterios claros y reducir sesgos para que la evaluación refleje mejor el desempeño real del estudiante.
+
+**Pregunta 3: ¿Cuál es la conducta correcta por parte del docente o tutor clínico, de acuerdo con los lineamientos expuestos en la capacitación introductoria?**
+Respuesta: Orientar y derivar al estudiante exclusivamente a través de los canales institucionales establecidos, asegurando confidencialidad.
+
+**Pregunta 4: ¿Qué acciones del tutor son adecuadas en esta situación?**
+Respuesta: Ajustar el nivel de supervisión según la competencia específica que está observando. Ofrecer retroalimentación diferenciada según el nivel de desarrollo que el estudiante muestra en cada tarea. Identificar en qué tareas el estudiante requiere más guía y práctica deliberada. Favorecer mayor autonomía en las actividades donde el estudiante ya demuestra más integración y seguridad. La idea importante no es usar el modelo como una etiqueta, sino como una guía para decidir cómo enseñar mejor.
+
+**Pregunta 5: ¿Cuál es la estrategia de evaluación más coherente con el nivel de desempeño esperado en este RdA?**
+Respuesta: Observación directa del desempeño con un paciente real mediante una pauta estructurada (por ejemplo, Mini-CEX). Para elegir bien una estrategia de evaluación, no basta con pensar en el contenido, sino también en el tipo de desempeño que exige el RdA. La evaluación más coherente es aquella que observa directamente su desempeño en la práctica.
+
+**Pregunta 6: ¿Qué describe un clima educativo clínico positivo?**
+Respuesta: Normas claras, supervisión constante y trato respetuoso. Un clima educativo positivo se fundamenta en el buen trato y la no discriminación, principios transversales que aseguran un ambiente apto para el aprendizaje y la preservación de la salud mental. Este entorno se caracteriza por el respeto a la dignidad humana, el uso de la empatía y un ejercicio responsable de la jerarquía.
+
+**Pregunta 7: ¿Qué caracteriza a un campo clínico de alta calidad?**
+Respuesta: Ofrece exposición a un volumen y variedad de patologías pertinentes para el logro de las competencias clínicas. Cuenta con tutores que modelan profesionalismo, ética y comunicación efectiva. Promueve protocolos de seguridad, gestión de riesgos y mejora continua.
+
+**Pregunta 8: ¿Cuál es la acción más adecuada del tutor clínico para mejorar el clima educativo y favorecer el aprendizaje de la estudiante?**
+Respuesta: Acompañarla durante el procedimiento, clarificar expectativas y entregar retroalimentación respetuosa. El maltrato o las correcciones bruscas frente a terceros vulneran la dignidad del estudiante y dañan la sana convivencia. La conducta correcta del tutor ante un estudiante inseguro es proporcionar un entorno de buen trato, empatía y acompañamiento constante.
+
+**Pregunta 9: ¿Qué práctica docente contribuye más directamente a la seguridad psicológica del estudiante en el contexto clínico?**
+Respuesta: Entregar retroalimentación respetuosa y centrada en el aprendizaje, de modo que el estudiante se sienta seguro para preguntar, reconocer errores y mejorar. La seguridad psicológica se fortalece cuando la retroalimentación se entrega con respeto y con foco en el aprendizaje, no en el castigo.
+
+**Pregunta 10: ¿Qué conductas se consideran ejemplos de maltrato o infracción a la sana convivencia según la Norma?**
+Respuesta: Hostigamiento o acoso. Exclusión social intencionada. Agresión física o verbal. La corrección respetuosa busca favorecer el aprendizaje; en cambio, la agresión, el hostigamiento y la exclusión vulneran la sana convivencia y no son aceptables en el contexto clínico-formativo.
+
+**Pregunta 11: ¿En qué condición pueden ofrecerse mecanismos alternativos de solución de conflictos o salidas anticipadas, como disculpas o mediación?**
+Respuesta: Pueden ofrecerse solo si existe consentimiento expreso de las personas involucradas, en particular de la víctima. Estos mecanismos no pueden imponerse por conveniencia institucional ni depender solo de circunstancias del caso.
+
+**Pregunta 12: ¿Qué condición es esencial para que el método de andamiaje se considere efectivamente implementado?**
+Respuesta: Que la ayuda del docente se adapte al nivel del estudiante y se retire gradualmente a medida que progresa. El andamiaje debe estar calibrado a la Zona de Desarrollo Próximo del aprendiz. La condición más crítica es su carácter dinámico y transitorio: contempla el desvanecimiento gradual del apoyo. Si la ayuda se vuelve permanente, se fomenta dependencia en lugar de autonomía profesional.
+
+**Pregunta 13: ¿Qué decisión docente aprovecha mejor la ZDP para favorecer el aprendizaje?**
+Respuesta: Ofrecerle desafíos alcanzables con supervisión, guía y retroalimentación. La utilidad de la ZDP está en ajustar la enseñanza al punto en que el estudiante puede progresar con ayuda.
+
+**Pregunta 14: ¿Cuál es la mejor estrategia para seguir desarrollando las competencias de un estudiante avanzado?**
+Respuesta: Exponerlo a situaciones clínicas variadas con supervisión, promoviendo la priorización, la toma de decisiones contextual y la reflexión sobre su desempeño. La supervisión debe transformarse en un espacio de reflexión y acompañamiento que asegure decisiones seguras.
+
+**Pregunta 15: ¿Qué acciones del tutor pueden favorecer el aprendizaje y bienestar del estudiante?**
+Respuesta: Reforzar sus recursos y avances, ayudándolo a reconocer capacidades que puede seguir desarrollando. Generar un espacio de conversación respetuosa para explorar cómo está viviendo la exigencia del contexto clínico. Orientar estrategias de autocuidado y facilitar que pida apoyo oportunamente cuando lo necesite.
+
+**Pregunta 16: ¿Qué medidas provisionales puede adoptar la institución durante una investigación para proteger a la presunta víctima?**
+Respuesta: Prohibición de contacto entre las partes. Separación de espacios físicos. Suspensión provisoria de funciones del académico denunciado. Las medidas provisionales buscan proteger a la víctima mientras se investiga, respetando el debido proceso. No son sanciones definitivas adoptadas sin investigación previa.
+
+## DOCUMENTO 2: "RUTA ACCION IMPORTANTE" — Canal Único de Denuncias en Campos Clínicos
+
+Fuente normativa: Norma de Carácter General N°4, SES, 2025
+Link del canal UAndes: https://www.uandes.cl/universidad/campus/campus-saludable/campos-clinicos-saludables/
+
+**PASO 1 — Ingreso centralizado:**
+Toda denuncia debe canalizarse EXCLUSIVAMENTE a través del Canal Único institucional, ya sea ingresada por el estudiante, activada por el docente, o por un tercero. El docente DEBE informar a los estudiantes sobre los mecanismos de resolución de conflictos y la existencia del canal único.
+
+**PASO 2 — Medidas provisionales inmediatas:**
+La Universidad adoptará desde el primer momento las medidas necesarias para resguardar la integridad física y psíquica del estudiante:
+- Reasignación de turno o supervisor
+- Adecuaciones curriculares
+- Activación de apoyo psicológico
+- Prohibición de represalias
+La derivación al hospital NO extingue la responsabilidad de la Universidad.
+
+**PASO 3 — Clasificación y vía de tramitación:**
+- Vía A (Gestión interna): Aplica a académicos, docentes o estudiantes de la Universidad. La Universidad tramita, investiga y sanciona conforme a su normativa interna.
+- Vía B (Derivación externa): Aplica a personal del hospital u otras instituciones. La Universidad deriva formalmente y mantiene seguimiento del estudiante.
+
+**Rol del docente frente al estudiante:**
+- Escuchar y contener activamente, sin minimizar ni cuestionar el relato.
+- Informar al estudiante sobre el Canal Único, sus derechos y posibilidad de reserva de identidad.
+- Activar el canal institucional de denuncia de estimarlo pertinente.
+- Orientar hacia apoyo psicológico disponible.
+- Acompañar al estudiante durante el proceso sin prometer resultados que no dependan del docente.
+
+## DOCUMENTO 3: Protocolo de Riesgo Suicida
+
+**EMERGENCIA — Fono Emergencias UAndes: +56 22 618 1100**
+Correo Salud Mental Estudiantil: saludmentalvu@uandes.cl
+
+**Señales de alerta que activan el protocolo:**
+- Cortes, quemaduras o rasguños en muñecas, muslos u otras zonas
+- Manifestación directa o por escrito del deseo de morir o hacerse daño
+- Sentimientos de desesperanza o de no tener razones para vivir
+
+**Evaluación del riesgo (Escala C-SSRS):**
+Preguntas graduales del 1 al 6, comenzando por generales hasta específicas sobre ideación y plan suicida.
+
+**Niveles de riesgo y acción:**
+- RIESGO LEVE (preguntas 1 y 2 = SÍ): Sugerir contacto con saludmentalvu@uandes.cl y realizar seguimiento.
+- RIESGO MEDIO (pregunta 3 o pregunta 6 "alguna vez en la vida" = SÍ): Llamar inmediatamente al +56 22 618 1100. Informar al Director de Estudios. Mantener al alumno en el lugar.
+- RIESGO ALTO (preguntas 4, 5 y/o 6 en últimos 3 meses = SÍ): Llamar inmediatamente al +56 22 618 1100. Contactar apoderado. NUNCA dejar al estudiante solo. Eliminar medios letales del entorno.
+
+## DOCUMENTO 4: Desarrollo Profesional Continuo (DPC) del Tutor Clínico
+
+**Competencias pedagógicas clave:**
+- Modelos ágiles: "Preceptor de un Minuto", "Modelo SNAPPS"
+- Monitoreo del razonamiento clínico: detectar los 6 errores comunes
+- Feedback constructivo: inmediato, basado en preguntas abiertas, en espacios privados
+
+**6 errores comunes de razonamiento clínico estudiantil:**
+1. No generar hipótesis plausibles
+2. Recopilar demasiada información sin foco
+3. Interpretación incorrecta de señales o síntomas
+4. Énfasis excesivo en hallazgos positivos
+5. Cierre prematuro del diagnóstico
+6. Solicitar demasiadas investigaciones o exámenes
+
+**Exigencias normativas:**
+- Capacitación obligatoria (mínimo 30 horas): Derechos Humanos, perspectiva de género, interculturalidad, buen trato.
+- Evaluación 360°: autoevaluación + pares clínicos + retroalimentación de estudiantes.
+- Garantizar no discriminación arbitraria.
+
+**Planificación de la enseñanza clínica:**
+- Integración e inducción antes de pasar a nuevos entornos clínicos.
+- Evaluación de necesidades y selección cuidadosa de pacientes.
+- Optimización de tiempos con tecnologías de información y portafolios electrónicos.
+`;
+
+/* ───────────────────────────────────────────
+   LAS 16 PREGUNTAS DEL DOCUMENTO (EXACTAS)
+─────────────────────────────────────────── */
+const FAQ16 = [
+  "¿Qué efectos del clima educativo clínico pueden observarse en el bienestar y desempeño del estudiante?",
+  "¿Qué medida contribuiría mejor a una evaluación más equitativa?",
+  "¿Cuál es la conducta correcta por parte del docente o tutor clínico, de acuerdo con los lineamientos expuestos en la capacitación introductoria?",
+  "¿Qué acciones del tutor son adecuadas en esta situación?",
+  "¿Cuál es la estrategia de evaluación más coherente con el nivel de desempeño esperado en este RdA?",
+  "¿Qué describe un clima educativo clínico positivo?",
+  "¿Qué caracteriza a un campo clínico de alta calidad?",
+  "¿Cuál es la acción más adecuada del tutor clínico para mejorar el clima educativo y favorecer el aprendizaje de la estudiante?",
+  "¿Qué práctica docente contribuye más directamente a la seguridad psicológica del estudiante en el contexto clínico?",
+  "¿Qué conductas se consideran ejemplos de maltrato o infracción a la sana convivencia según la Norma?",
+  "¿En qué condición pueden ofrecerse mecanismos alternativos de solución de conflictos o salidas anticipadas, como disculpas o mediación?",
+  "¿Qué condición es esencial para que el método de andamiaje se considere efectivamente implementado?",
+  "¿Qué decisión docente aprovecha mejor la ZDP para favorecer el aprendizaje?",
+  "¿Cuál es la mejor estrategia para seguir desarrollando las competencias de un estudiante avanzado?",
+  "¿Qué acciones del tutor pueden favorecer el aprendizaje y bienestar del estudiante?",
+  "¿Qué medidas provisionales puede adoptar la institución durante una investigación para proteger a la presunta víctima?"
+];
+
+/* ─────────────────
+   ESTADO
+───────────────── */
+let history        = [];
+let shownFAQ       = new Set();
+let currentSuggestions = [];
+
+/* ─────────────────
+   CONSENT
+───────────────── */
+function tog(id) {
+  const el = document.getElementById(id);
+  el.checked = !el.checked;
+  document.getElementById('btn-start').disabled =
+    !(document.getElementById('ch1').checked && document.getElementById('ch2').checked);
+}
+document.getElementById('ch1').addEventListener('change', () => {
+  document.getElementById('btn-start').disabled =
+    !(document.getElementById('ch1').checked && document.getElementById('ch2').checked);
+});
+document.getElementById('ch2').addEventListener('change', () => {
+  document.getElementById('btn-start').disabled =
+    !(document.getElementById('ch1').checked && document.getElementById('ch2').checked);
+});
+
+function initChat() {
+  document.getElementById('sc-terms').classList.remove('active');
+  document.getElementById('sc-chat').classList.add('active');
+  renderInitialFAQ();
+  addBot(
+    '¡Bienvenido/a al asistente de <strong>Formación Clínica Docente</strong> de la Universidad de los Andes 👋<br><br>' +
+    'Estoy aquí para ayudarte a encontrar información sobre los contenidos del curso: clima educativo clínico, evaluación, protocolos, andamiaje, sana convivencia y más.<br><br>' +
+    'Mis respuestas se basan <strong>exclusivamente en los documentos del curso</strong>. Si algo no está en ellos, te lo indicaré. ' +
+    'Ante situaciones críticas, te entregaré la <strong>ruta de acción institucional</strong> correspondiente, pero recuerda que este agente solo facilita información — no tramita solicitudes ni reportes formales.<br><br>' +
+    'Puedes comenzar seleccionando una de las preguntas frecuentes o escribiendo tu consulta. ¿En qué puedo orientarte?',
+    null, null, false
+  );
+}
+
+/* ─────────────────
+   FAQ INICIAL (8)
+───────────────── */
+function renderInitialFAQ() {
+  const area = document.getElementById('sugg-area');
+  area.innerHTML = '<div class="sugg-label">Preguntas del curso — elige para comenzar</div>';
+  const first8 = FAQ16.slice(0, 8);
+  first8.forEach(q => {
+    shownFAQ.add(q);
+    const btn = document.createElement('button');
+    btn.className = 'sp';
+    btn.textContent = q;
+    btn.onclick = () => quickSend(q);
+    area.appendChild(btn);
+  });
+}
+
+/* ─────────────────
+   SUGERENCIAS POST-RESPUESTA
+───────────────── */
+function renderSuggestions(suggestions) {
+  const area = document.getElementById('sugg-area');
+  area.innerHTML = '<div class="sugg-label">Preguntas relacionadas</div>';
+  suggestions.forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'sp';
+    btn.textContent = q;
+    btn.onclick = () => quickSend(q);
+    area.appendChild(btn);
+  });
+}
+
+function getNextFAQSuggestion() {
+  return FAQ16.find(q => !shownFAQ.has(q)) || null;
+}
+
+/* ─────────────────
+   RENDER MENSAJES
+───────────────── */
+function addUser(txt) {
+  const m = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'mrow u';
+  d.innerHTML = `<div class="av user">TÚ</div><div class="bub user">${esc(txt)}</div>`;
+  m.appendChild(d);
+  m.scrollTop = m.scrollHeight;
+}
+
+function addBot(html, source, confidence, showConf = true) {
+  const m = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'mrow';
+
+  let inner = `<div class="bub bot">${html}`;
+
+  if (showConf && confidence) {
+    const cls = confidence === 'ALTO' ? 'high' : confidence === 'MEDIO' ? 'medium' : 'low';
+    const icon = confidence === 'ALTO' ? '●' : confidence === 'MEDIO' ? '◑' : '○';
+    inner += `<div><span class="conf ${cls}">${icon} Confianza ${confidence}</span></div>`;
+  }
+
+  if (source) {
+    // Mostrar fuente como texto discreto, sin bloque visual
+    const cleanSource = source.replace(/^📄\s*/,'').replace(/---+/g,'').trim();
+    inner += `<span class="source-txt">Fuente: ${cleanSource}</span>`;
+  }
+
+  inner += `</div>`;
+  d.innerHTML = `<div class="av bot">UA</div>${inner}`;
+  m.appendChild(d);
+  m.scrollTop = m.scrollHeight;
+}
+
+function addAlert(html) {
+  const m = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'mrow';
+  d.innerHTML = `
+    <div class="av bot">UA</div>
+    <div class="bub bot">
+      ${html}
+      <div class="alert-box">
+        <div class="alert-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Aviso importante
+        </div>
+        ⚠️ Este agente no genera ni gestiona solicitudes formales. La información entregada es únicamente referencial y de carácter orientativo. Para acciones formales, dirígete directamente a los canales institucionales de la Universidad de los Andes.
+      </div>
+    </div>`;
+  m.appendChild(d);
+  m.scrollTop = m.scrollHeight;
+}
+
+function showTyping() {
+  const m = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'mrow'; d.id = 'typing';
+  d.innerHTML = `<div class="av bot">UA</div><div class="typing"><span></span><span></span><span></span></div>`;
+  m.appendChild(d);
+  m.scrollTop = m.scrollHeight;
+}
+function removeTyping() { const el = document.getElementById('typing'); if (el) el.remove(); }
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─────────────────
+   API CALL
+───────────────── */
+const CRITICAL_KEYWORDS = ['denuncia','maltrato','acoso','hostigamiento','suicida','suicidio','emergencia','riesgo','protocolo','violencia','canal único','agresión'];
+
+async function callAPI(userText) {
+  history.push({ role: 'user', content: userText });
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': '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',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1200,
+      system: SYSTEM,
+      messages: history.slice(-10)
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || 'Error API');
+  const reply = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  history.push({ role: 'assistant', content: reply });
+  return reply;
+}
+/* ─────────────────
+   PARSEAR RESPUESTA
+───────────────── */
+function parseReply(raw) {
+  const result = { body: '', source: '', confidence: '', suggestions: [] };
+
+  const respMatch   = raw.match(/\*\*Respuesta:\*\*\s*([\s\S]*?)(?=\*\*Fuente:|$)/i);
+  const fuenteMatch = raw.match(/\*\*Fuente:\*\*\s*([\s\S]*?)(?=\*\*Nivel de confianza:|$)/i);
+  const confMatch   = raw.match(/\*\*Nivel de confianza:\*\*\s*(ALTO|MEDIO|BAJO)/i);
+  const suggMatch   = raw.match(/\*\*Sugerencias relacionadas:\*\*\s*([\s\S]*?)$/i);
+
+  result.body       = respMatch   ? formatBody(respMatch[1].trim())  : formatBody(raw);
+  result.source     = fuenteMatch ? fuenteMatch[1].replace(/---+/g,'').trim() : '';
+  result.confidence = confMatch   ? confMatch[1].toUpperCase()       : 'MEDIO';
+
+  // Máximo 2 sugerencias temáticas del modelo
+  if (suggMatch) {
+    result.suggestions = suggMatch[1].trim().split('\n')
+      .map(l => l.replace(/^[-•*\d.]+\s*/,'').trim())
+      .filter(l => l.length > 8)
+      .slice(0, 2);   // ← solo 2 del modelo
+  }
+
+  // + 1 pregunta del FAQ16 no vista aún
+  const next = getNextFAQSuggestion();
+  if (next && !result.suggestions.includes(next)) {
+    result.suggestions.push(next);
+    shownFAQ.add(next);
+  }
+
+  return result;
+}
+
+function formatBody(txt) {
+  return txt
+    .replace(/^---+\s*/gm, '')          // eliminar líneas con solo ---
+    .replace(/\s*---+\s*/g, ' ')        // eliminar --- inline
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n- /g,  '<br>• ')
+    .replace(/\n(\d+)\.\s/g, '<br>$1. ')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>')
+    .replace(/^(<br>)+/, '')            // limpiar saltos al inicio
+    .trim();
+}
+
+function isCritical(txt) {
+  const low = txt.toLowerCase();
+  return CRITICAL_KEYWORDS.some(k => low.includes(k));
+}
+
+/* ─────────────────
+   ENVÍO
+───────────────── */
+async function doSend() {
+  const inp = document.getElementById('cin');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  addUser(txt);
+  showTyping();
+
+  try {
+    const raw = await callAPI(txt);
+    removeTyping();
+    const parsed = parseReply(raw);
+    const critical = isCritical(txt) || isCritical(raw);
+
+    if (critical) {
+      addAlert(parsed.body);
+    } else {
+      addBot(parsed.body, parsed.source, parsed.confidence);
+    }
+
+    if (parsed.suggestions.length) {
+      renderSuggestions(parsed.suggestions);
+    }
+  } catch(e) {
+    removeTyping();
+    addBot('Ocurrió un error al conectar con el servicio. Por favor intenta nuevamente en unos momentos.', null, null, false);
+    console.error(e);
+  }
+}
+
+async function quickSend(q) {
+  document.getElementById('cin').value = q;
+  await doSend();
+}
+
+/* ─────────────────
+   RESET
+───────────────── */
+function doReset() {
+  if (confirm('¿Iniciar una nueva sesión? El historial actual se eliminará.')) {
+    history = [];
+    shownFAQ.clear();
+    document.getElementById('msgs').innerHTML = '';
+    document.getElementById('sc-chat').classList.remove('active');
+    document.getElementById('sc-terms').classList.add('active');
+    document.getElementById('ch1').checked = false;
+    document.getElementById('ch2').checked = false;
+    document.getElementById('btn-start').disabled = true;
+  }
+}
+</script>
+</body>
+</html>
