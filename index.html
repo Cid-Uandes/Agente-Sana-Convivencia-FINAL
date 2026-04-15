@@ -314,7 +314,7 @@
     <div class="msgs" id="msgs"></div>
 
     <div class="sugg-area" id="sugg-area">
-      <div class="sugg-label">Preguntas del curso — elige para comenzar</div>
+      <div class="sugg-label">Preguntas directas del Curso</div>
     </div>
 
     <div class="iarea">
@@ -341,16 +341,17 @@
 /* ───────────────────────────────────────────
    BASE DE CONOCIMIENTO COMPLETA DEL CURSO
 ─────────────────────────────────────────── */
-const SYSTEM = `Eres un agente conversacional de la Universidad de los Andes (UAndes), especializado en el curso de Formación Clínica Docente. Tu único propósito es orientar e informar basándote EXCLUSIVAMENTE en los documentos del curso que se te proporcionan a continuación.
+const SYSTEM = `Eres un asistente pedagógico de la Universidad de los Andes (UAndes), especializado en el curso de Formación Clínica Docente. Tu propósito es orientar e informar a los usuarios basándote en los documentos del curso.
 
 ═══════════════════════════════
-PRINCIPIOS OPERATIVOS CRÍTICOS
+PRINCIPIOS OPERATIVOS
 ═══════════════════════════════
-1. Responde SOLO con información contenida en los documentos. NUNCA inventes, supongas ni complementes con conocimiento externo.
-2. Si la información no está en los documentos, responde EXACTAMENTE: "No es posible responder esta consulta con la información disponible en los documentos del curso."
-3. Si la consulta es ambigua, solicita precisión: "¿Podría especificar a qué aspecto se refiere dentro de los contenidos del curso?"
-4. No generes opiniones, recomendaciones fuera de los documentos ni datos de usuarios.
+1. Responde con la información disponible en los documentos. Sé FLEXIBLE: si la pregunta del usuario se relaciona de alguna forma con los temas del curso (clima clínico, evaluación, andamiaje, sana convivencia, bienestar, protocolos, tutores, retroalimentación, etc.), busca la información más relevante y responde con ella.
+2. Solo indica que no puedes responder si la consulta es completamente ajena al curso (ej: recetas de cocina, deportes, temas sin ninguna relación con formación clínica).
+3. Si la pregunta es general pero relacionada con los temas del curso, responde con la información más pertinente disponible.
+4. No generes información inventada ni datos de usuarios.
 5. Responde siempre en español, con tono profesional y cálido, coherente con los valores de la Universidad de los Andes.
+6. NUNCA uses --- como separador en tus respuestas. Usa saltos de línea o simplemente continúa el texto.
 
 ═══════════════════════════════════
 ESTRUCTURA OBLIGATORIA DE RESPUESTA
@@ -358,18 +359,13 @@ ESTRUCTURA OBLIGATORIA DE RESPUESTA
 Siempre usa este formato exacto:
 
 **Respuesta:**
-[Respuesta clara y directa basada únicamente en los documentos]
+[Respuesta clara y directa. Si hay múltiples puntos, sepáralos con saltos de línea o viñetas. NUNCA uses --- como separador.]
 
 **Fuente:**
-[Nombre del documento + sección + link si aplica]
-
-**Nivel de confianza:** [ALTO / MEDIO / BAJO]
-- ALTO: la respuesta está explícitamente en el documento con texto literal
-- MEDIO: la respuesta se puede inferir directamente del contexto del documento
-- BAJO: la respuesta es parcial o la información es escasa en el documento
+[Solo si existe: Nombre del documento y sección relevante. Si hay un link público disponible inclúyelo. Si no hay fuente clara, omite esta sección completamente — no pongas  ni texto vacío.]
 
 **Sugerencias relacionadas:**
-[Exactamente 2 preguntas cortas, relacionadas al tema consultado, basadas en los documentos. Una por línea. Sin numeración ni viñetas. Sin combinar múltiples preguntas en una sola línea.]
+[Exactamente 2 preguntas cortas relacionadas al tema, basadas en los documentos. Una por línea. Sin numeración ni viñetas.]
 
 ═══════════════════════════════════════════════════
 MANEJO DE SITUACIONES CRÍTICAS — RUTA DE ACCIÓN
@@ -570,7 +566,7 @@ function initChat() {
 ───────────────── */
 function renderInitialFAQ() {
   const area = document.getElementById('sugg-area');
-  area.innerHTML = '<div class="sugg-label">Preguntas del curso — elige para comenzar</div>';
+  area.innerHTML = '<div class="sugg-label">Preguntas directas del Curso</div>';
   const first8 = FAQ16.slice(0, 8);
   first8.forEach(q => {
     shownFAQ.add(q);
@@ -620,16 +616,13 @@ function addBot(html, source, confidence, showConf = true) {
 
   let inner = `<div class="bub bot">${html}`;
 
-  if (showConf && confidence) {
-    const cls = confidence === 'ALTO' ? 'high' : confidence === 'MEDIO' ? 'medium' : 'low';
-    const icon = confidence === 'ALTO' ? '●' : confidence === 'MEDIO' ? '◑' : '○';
-    inner += `<div><span class="conf ${cls}">${icon} Confianza ${confidence}</span></div>`;
-  }
+  // confidence badge removed by design
 
-  if (source) {
-    // Mostrar fuente como texto discreto, sin bloque visual
-    const cleanSource = source.replace(/^📄\s*/,'').replace(/---+/g,'').trim();
-    inner += `<span class="source-txt">Fuente: ${cleanSource}</span>`;
+  if (source && source.trim() && source.trim() !== '' && source.trim().length > 3) {
+    const cleanSource = source.replace(/^📄\s*/,'').replace(/---+/g,'').replace(/N\/A/gi,'').trim();
+    if (cleanSource.length > 3) {
+      inner += `<span class="source-txt">Fuente: ${cleanSource}</span>`;
+    }
   }
 
   inner += `</div>`;
@@ -709,7 +702,7 @@ function parseReply(raw) {
 
   result.body       = respMatch   ? formatBody(respMatch[1].trim())  : formatBody(raw);
   result.source     = fuenteMatch ? fuenteMatch[1].replace(/---+/g,'').trim() : '';
-  result.confidence = confMatch   ? confMatch[1].toUpperCase()       : 'MEDIO';
+  result.confidence = ''; // confidence display removed
 
   // Máximo 2 sugerencias temáticas del modelo
   if (suggMatch) {
@@ -731,14 +724,15 @@ function parseReply(raw) {
 
 function formatBody(txt) {
   return txt
-    .replace(/^---+\s*/gm, '')          // eliminar líneas con solo ---
-    .replace(/\s*---+\s*/g, ' ')        // eliminar --- inline
+    .replace(/^[-─═\s]*---+[-─═\s]*/gm, '')
+    .replace(/\s*---+\s*/g, ' ')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n- /g,  '<br>• ')
     .replace(/\n(\d+)\.\s/g, '<br>$1. ')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>')
-    .replace(/^(<br>)+/, '')            // limpiar saltos al inicio
+    .replace(/^(<br>)+/, '')
+    .replace(/N\/A/gi, '')
     .trim();
 }
 
